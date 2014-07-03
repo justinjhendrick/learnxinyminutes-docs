@@ -6,7 +6,11 @@ filename: learnparasail.psl
 ---
 
 ParaSail is a work in progress language built for parallel and high integrity
-software. It has implicit parallelism and compiler checked Pre/Post conditions
+software. It has both implicit and explicit parallelism
+and compiler checked Pre/Post conditions
+
+Not all features mentioned here are fully implemented. See the release notes
+in the source on the [website](http://parasail-lang.org).
 
 ```
 //  This is a comment
@@ -17,6 +21,8 @@ software. It has implicit parallelism and compiler checked Pre/Post conditions
 func Add(X : Univ_Integer; Y : Univ_Integer) -> Univ_Integer is
    //  End of line semi-colons are optional
    return X + Y;
+   //  +, +=, -, -=, *, *=, /, /=
+   //  all do what you'd expect (/ is integer division)
 end func Add;
 
 //  If you find Univ_Integer to be too verbose you can import Short_Names
@@ -77,7 +83,7 @@ func main(Args : Basic_Array<String>) is
    
    //  Sum of fibs!
    Println(Sum_Of(10, Fib))
-end func Run
+end func main 
 
 //  Preceding a type with 'optional' allows it to take the value 'null'
 func Divide(A, B : Int) -> optional Int is
@@ -90,8 +96,10 @@ end func Divide;
 
 //  2. Modules
 //  Modules are composed of an interface and a class
-//  ParaSail has object orientation
+//  ParaSail has object orientation features
 
+//  modules can be defined as 'concurrent'
+//  which allows 'locked' and 'queued' parameters
 concurrent interface Locked_Box<Content_Type is Assignable<>> is
    // Create a box with the given content
    func Create(C : optional Content_Type) -> Locked_Box;
@@ -164,5 +172,7 @@ end func Use_Box;
 ```
 
 ## Further reading
-[Blog](http://parasail-programming-language.blogspot.com/)
-[Google Group](https://groups.google.com/forum/#!forum/parasail-programming-language)
+Read the [Blog](http://parasail-programming-language.blogspot.com/) and the
+[website](http://parasail-lang.org). Feel free to ask
+for help on the [Google Group](https://groups.google.com/forum/
+#!forum/parasail-programming-language)
