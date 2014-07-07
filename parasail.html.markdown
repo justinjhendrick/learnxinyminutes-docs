@@ -32,8 +32,19 @@ import PSL::Short_Names::*, *
 func Greetings() is
    //  All declarations are 'const', 'var', or 'ref'
    const S : String := "Hello, World!"
+   //  Assignment is :=, equality checks are ==, and != is not equals
    Println(S)
 end func Greetings
+
+func Boolean_Examples(B : Bool) is
+   //  Booleans are a special type of enumeration
+   //  All enumerations are preceded by a sharp '#'
+   const And := B and #true           //  Parallel execution of operands
+   const And_Then := B and then #true //  Short-Circuit
+   const Or := B or #false            //  Parallel execution of operands
+   const Or_Else := B or else #false  //  Short-Cirtuit
+   const Xor := B xor #true
+end func Boolean_Examples
 
 func Fib(N : Int) {N >= 0} -> Int is
    //  '{N >= 0}' is a precondition to this function
@@ -61,38 +72,52 @@ func Increment_All(var Nums : Vector<Int>) is
 end func Increment_All
 
 func Sum_Of_Squares(N : Int) -> Int is
-   //  Built-in and inherently parallel map-reduce
-   //  Initial value is enclosed with angle brackets
-   return (for I in 1 .. N => <0> + I ** 2)
+   //  The type of Sum is inferred
+   var Sum := 0
+   for I in 1 .. N forward loop
+      Sum += I ** 2 //  ** is exponentiation
+   end loop
 end func Sum_Of_Squares
 
 func Sum_Of(N : Int; F : func (Int) -> Int) -> Int is
    //  It has functional aspects as well
    //  Here, we're taking an (Int) -> Int function as a parameter
+   //  and using the inherently parallel map-reduce.
+   //  Initial value is enclosed with angle brackets
    return (for I in 1 .. N => <0> + F(I))
 end func Sum_Of
 
 func main(Args : Basic_Array<String>) is
    Greetings()
    Println(Fib(5));
-   var Vec : Vector<Int> := [0, 1, 2]
+   //  Container Comprehension
+   var Vec : Vector<Int> := [for I in 0 .. 10 {I mod 2 == 0} => I ** 2]
+   //  Vec = [0, 4, 16, 36, 64, 100]
    Increment_All(Vec)
-   //  '|' is an overloaded operator. Here used for building strings
-   Println(Vec[1] | ", " | Vec[2] | ", " | Vec[3])
+   //  Vec = [1, 5, 17, 37, 65, 101]
+   //  '|' is an overloaded operator.
+   //  It's usually used for concatenation or adding to a container
+   Println("First: " | Vec[1] | ", Last: " | Vec[Length(Vec)]);
+   //  Vectors are 1 indexed, 0 indexed ZVectors are also available
+   
    Println(Sum_Of_Squares(3))
    
    //  Sum of fibs!
    Println(Sum_Of(10, Fib))
-end func main 
+end func main
 
 //  Preceding a type with 'optional' allows it to take the value 'null'
-func Divide(A, B : Int) -> optional Int is
-   if B == 0 then
-      return null;
+func Divide(A, B, C : Real) -> optional Real is
+   //  Real is the floating point type
+   const Epsilon := 1.0e-6;
+   if B in -Epsilon .. Epsilon then
+      return null
+   elsif C in -Epsilon .. Epsilon then
+      return null
    else
-      return A / B;
-   end if;
-end func Divide;
+      return A / B + A / C
+   end if
+end func Divide
 
 //  2. Modules
 //  Modules are composed of an interface and a class
@@ -118,55 +143,55 @@ concurrent interface Locked_Box<Content_Type is Assignable<>> is
 end interface Locked_Box;
 
 concurrent class Locked_Box is
-    var Content : optional Content_Type;
-  exports
-    func Create(C : optional Content_Type) -> Locked_Box is
-        return (Content => C);
-    end func Create;
+   var Content : optional Content_Type;
+exports
+   func Create(C : optional Content_Type) -> Locked_Box is
+      return (Content => C);
+   end func Create;
 
-    func Put(locked var B : Locked_Box; C : Content_Type) is
-        B.Content := C;
-    end func Put;
+   func Put(locked var B : Locked_Box; C : Content_Type) is
+      B.Content := C;
+   end func Put;
 
-    func Content(locked B : Locked_Box) -> optional Content_Type is
-        return B.Content;
-    end func Content;
+   func Content(locked B : Locked_Box) -> optional Content_Type is
+      return B.Content;
+   end func Content;
 
-    func Remove(locked var B : Locked_Box) -> Result : optional Content_Type is
-        // '<==' is the move operator
-        // It moves the right operand into the left operand,
-        // leaving the right null.
-        Result <== B.Content;
-    end func Remove;
+   func Remove(locked var B : Locked_Box) -> Result : optional Content_Type is
+      // '<==' is the move operator
+      // It moves the right operand into the left operand,
+      // leaving the right null.
+      Result <== B.Content;
+   end func Remove;
 
-    func Get(queued var B : Locked_Box) -> Result : Content_Type is
+   func Get(queued var B : Locked_Box) -> Result : Content_Type is
       queued until B.Content not null then
-        Result <== B.Content;
-    end func Get;
+      Result <== B.Content;
+   end func Get;
 end class Locked_Box;
 
 func Use_Box(Seed : Univ_Integer) is
-    var U_Box : Locked_Box<Univ_Integer> := Create(null);
-    //  Type Inference. The type of 'Ran' can be left out because
-    //  it is inferred from the return type of Random::Start
-    var Ran := Random::Start(Seed);
+   var U_Box : Locked_Box<Univ_Integer> := Create(null);
+   //  Type Inference. The type of 'Ran' can be left out because
+   //  it is inferred from the return type of Random::Start
+   var Ran := Random::Start(Seed);
 
-    Println("Starting 100 pico-threads trying to put something in the box");
-    Println(" or take something out.");
-    for I in 1..100 concurrent loop
-        if I < 30 then
-            Println("Getting out " | Get(U_Box));
-        else
-            Println("Putting in " | I);
-            U_Box.Put(I);
+   Println("Starting 100 pico-threads trying to put something in the box");
+   Println(" or take something out.");
+   for I in 1..100 concurrent loop
+      if I < 30 then
+         Println("Getting out " | Get(U_Box));
+      else
+         Println("Putting in " | I);
+         U_Box.Put(I);
 
-            //  The first parameter can be moved to the front with a dot
-            //  X.Foo(Y) is equivalent to Foo(X, Y)
-        end if;
-    end loop;
+         //  The first parameter can be moved to the front with a dot
+         //  X.Foo(Y) is equivalent to Foo(X, Y)
+      end if;
+   end loop;
 
-    Println("And the winner is: " | Remove(U_Box));
-    Println("And the box is now " | Content(U_Box));
+   Println("And the winner is: " | Remove(U_Box));
+   Println("And the box is now " | Content(U_Box));
 end func Use_Box;
 
 ```
