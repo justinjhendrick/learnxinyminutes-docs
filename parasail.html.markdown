@@ -19,36 +19,34 @@ in the source on the [website](http://parasail-lang.org).
 
 //  Functions
 func Add(X : Univ_Integer; Y : Univ_Integer) -> Univ_Integer is
-   //  End of line semi-colons are optional
    return X + Y;
-   //  +, +=, -, -=, *, *=, /, /=
-   //  all do what you'd expect (/ is integer division)
 end func Add;
+//  End of line semi-colons are optional
+//  +, +=, -, -=, *, *=, /, /=
+//  all do what you'd expect (/ is integer division)
 
 //  If you find Univ_Integer to be too verbose you can import Short_Names
 //  which defines aliases like Int for Univ_Integer and String for Univ_String
 import PSL::Short_Names::*, *
 
 func Greetings() is
-   //  All declarations are 'const', 'var', or 'ref'
    const S : String := "Hello, World!"
-   //  Assignment is :=, equality checks are ==, and != is not equals
    Println(S)
 end func Greetings
+//  All declarations are 'const', 'var', or 'ref'
+//  Assignment is :=, equality checks are ==, and != is not equals
 
 func Boolean_Examples(B : Bool) is
-   //  Booleans are a special type of enumeration
-   //  All enumerations are preceded by a sharp '#'
    const And := B and #true           //  Parallel execution of operands
    const And_Then := B and then #true //  Short-Circuit
    const Or := B or #false            //  Parallel execution of operands
    const Or_Else := B or else #false  //  Short-Cirtuit
    const Xor := B xor #true
 end func Boolean_Examples
+//  Booleans are a special type of enumeration
+//  All enumerations are preceded by a sharp '#'
 
 func Fib(N : Int) {N >= 0} -> Int is
-   //  '{N >= 0}' is a precondition to this function
-   //  Preconditions are built in to the language and checked by the compiler
    if N <= 1 then
       return N
    else
@@ -56,20 +54,20 @@ func Fib(N : Int) {N >= 0} -> Int is
       return Fib(N - 1) + Fib(N - 2)
    end if
 end func Fib
+//  '{N >= 0}' is a precondition to this function
+//  Preconditions are built in to the language and checked by the compiler
 
 //  ParaSail does not have mutable global variables
 //  Instead, use 'var' parameters
 func Increment_All(var Nums : Vector<Int>) is
-   //  This function takes a 'var' parameter.
-   //  The modifications made here will be seen by caller
    for each Elem of Nums concurrent loop
-      //  The 'concurrent' keyword tells the compiler that
-      //  iterations of the loop can happen in any order.
-      //  It will choose the most optimal number of picothreads to use.
-      //  Other options are 'forward' and 'reverse'.
       Elem += 1
    end loop
 end func Increment_All
+//  The 'concurrent' keyword in the loop header tells the compiler that
+//  iterations of the loop can happen in any order.
+//  It will choose the most optimal number of threads to use.
+//  Other options are 'forward' and 'reverse'.
 
 func Sum_Of_Squares(N : Int) -> Int is
    //  The type of Sum is inferred
@@ -79,17 +77,17 @@ func Sum_Of_Squares(N : Int) -> Int is
    end loop
 end func Sum_Of_Squares
 
-func Sum_Of(N : Int; F : func (Int) -> Int) -> Int is
-   //  It has functional aspects as well
-   //  Here, we're taking an (Int) -> Int function as a parameter
-   //  and using the inherently parallel map-reduce.
-   //  Initial value is enclosed with angle brackets
-   return (for I in 1 .. N => <0> + F(I))
+func Sum_Of(N : Int; Map : func (Int) -> Int) -> Int is
+   return (for I in 1 .. N => <0> + Map(I))
 end func Sum_Of
+//  It has functional aspects as well
+//  Here, we're taking an (Int) -> Int function as a parameter
+//  and using the inherently parallel map-reduce.
+//  Initial value is enclosed with angle brackets
 
 func main(Args : Basic_Array<String>) is
-   Greetings()
-   Println(Fib(5));
+   Greetings()     //  Hello, World!
+   Println(Fib(5)) //  5
    //  Container Comprehension
    var Vec : Vector<Int> := [for I in 0 .. 10 {I mod 2 == 0} => I ** 2]
    //  Vec = [0, 4, 16, 36, 64, 100]
@@ -172,7 +170,7 @@ end class Locked_Box;
 
 func Use_Box(Seed : Univ_Integer) is
    var U_Box : Locked_Box<Univ_Integer> := Create(null);
-   //  Type Inference. The type of 'Ran' can be left out because
+   //  The type of 'Ran' can be left out because
    //  it is inferred from the return type of Random::Start
    var Ran := Random::Start(Seed);
 
